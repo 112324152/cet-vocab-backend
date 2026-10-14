@@ -6,17 +6,19 @@ spring:
     name: cet-vocab-backend
 
   datasource:
-    url: jdbc:mysql://localhost:3306/cet_vocab?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
-    username: root
-    password: 123456
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:cet_vocab}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:123456}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
 mybatis:
   configuration:
     map-underscore-to-camel-case: true
+
 llm:
-  base-url: http://localhost:11434/v1
-  api-key: ollama
-  model: qwen2.5:3b
+  base-url: ${LLM_BASE_URL:http://localhost:11434/v1}
+  api-key: ${LLM_API_KEY:ollama}
+  model: ${LLM_MODEL:qwen2.5:3b}
+
 import:
-  enabled: false
+  enabled: ${IMPORT_ENABLED:false}

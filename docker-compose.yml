@@ -1,0 +1,62 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: cet-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: cet_vocab
+      TZ: Asia/Shanghai
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot123456"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: cet-ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11435:11434"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cet-backend
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: cet_vocab
+      DB_USER: root
+      DB_PASSWORD: root123456
+      LLM_BASE_URL: http://ollama:11434/v1
+      LLM_API_KEY: ollama
+      LLM_MODEL: qwen2.5:3b
+      IMPORT_ENABLED: "true"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ../cet-vocab-frontend
+      dockerfile: Dockerfile
+    container_name: cet-frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+
+volumes:
+  mysql_data:
+  ollama_data:

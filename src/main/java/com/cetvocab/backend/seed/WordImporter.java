@@ -43,6 +43,12 @@ public class WordImporter implements CommandLineRunner {
             return;
         }
 
+        long existing = countExisting();
+        if (existing > 0) {
+            log.info("词库已有 {} 条数据，跳过导入", existing);
+            return;
+        }
+
         log.info("开始导入词库...");
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         Resource[] resources = resolver.getResources("classpath*:seed/*.json");
@@ -110,6 +116,19 @@ public class WordImporter implements CommandLineRunner {
         }
 
         log.info("本次为一次性操作，请把 application.yml 里的 import.enabled 改回 false 再重启");
+    }
+
+    /**
+     * 查当前词库条数。用于"有数据就跳过导入"，让导入开关在 Docker 里可以常开。
+     * 依赖 word 表已存在。
+     */
+    private long countExisting() throws Exception {
+        try (var conn = dataSource.getConnection();
+             var st = conn.createStatement();
+             var rs = st.executeQuery("SELECT COUNT(*) FROM word")) {
+            rs.next();
+            return rs.getLong(1);
+        }
     }
 
     private void mergeInto(Map<String, SeedWord> merged, String name,
