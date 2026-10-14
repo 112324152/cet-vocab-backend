@@ -18,3 +18,5 @@ llm:
   base-url: http://localhost:11434/v1
   api-key: ollama
   model: qwen2.5:3b
+import:
+  enabled: false

@@ -16,4 +16,12 @@ public interface WordMapper {
 
     @Select("SELECT id, text, phonetic, meanings, example, level FROM word WHERE id = #{id}")
     WordRow findById(@Param("id") Long id);
+    @Select("SELECT w.id FROM word w "
+            + "LEFT JOIN word_state ws ON ws.word_id = w.id "
+            + "WHERE ws.word_id IS NULL AND w.id <> #{excludeId} "
+            + "ORDER BY RAND() LIMIT 1")
+    Long findRandomNew(@Param("excludeId") Long excludeId);
+
+    @Select("SELECT COUNT(*) FROM word")
+    long countTotal();
 }
