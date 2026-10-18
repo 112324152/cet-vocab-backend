@@ -1,15 +1,16 @@
+# ---------- 第一阶段：用带 Maven 的镜像编译打包 ----------
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 
-RUN mkdir -p /root/.m2 \
-    && printf '%s' '<settings><mirrors><mirror><id>aliyun</id><mirrorOf>central</mirrorOf><url>https://maven.aliyun.com/repository/public</url></mirror></mirrors></settings>' > /root/.m2/settings.xml
-
+# 海外服务器直连 Maven Central，不配国内镜像
 COPY pom.xml .
-RUN mvn -q dependency:go-offline
+RUN mvn -B dependency:go-offline
 
+# 再复制源码并打包
 COPY src ./src
-RUN mvn -q clean package -DskipTests
+RUN mvn -B clean package -DskipTests
 
+# ---------- 第二阶段：只带 JRE 的运行镜像 ----------
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 
