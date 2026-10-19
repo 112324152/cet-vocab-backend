@@ -46,6 +46,18 @@ public class WordService {
         this.reviewLogMapper = reviewLogMapper;
     }
 
+    /** 返回整份词表，仅用于调试和后续的词库管理页面。正式背诵走 next()。 */
+    public List<Word> getWords() {
+        return wordMapper.findAll().stream()
+                .map(this::toWord)
+                .toList();
+    }
+
+    /** 取单词原文，供 TTS 使用。 */
+    public String getWordText(Long id) {
+        return getWord(id).getText();
+    }
+
     public Word next(Long excludeId) {
         Long excluded = (excludeId == null) ? -1L : excludeId;
 
@@ -73,7 +85,6 @@ public class WordService {
         WordStateRow existing = wordStateMapper.findByWordId(wordId);
         WordStateRow updated = applyAlgorithm(existing, wordId, state);
         wordStateMapper.upsert(updated);
-        // 每次标记都留一条历史，供后续数据分析
         reviewLogMapper.insert(wordId, state);
     }
 
@@ -141,9 +152,6 @@ public class WordService {
         return reviewLogMapper.findDaily(days);
     }
 
-    /**
-     * 易忘词排行：lapses 越多说明越多次忘记，间隔越短说明越没巩固。
-     */
     public List<HardestWordDto> hardestWords(int limit) {
         List<WordStateRow> states = wordStateMapper.findHardest(limit);
         List<HardestWordDto> result = new ArrayList<>();
@@ -171,9 +179,6 @@ public class WordService {
         return result;
     }
 
-    /**
-     * 按当前复习间隔分档统计词数，反映记忆巩固程度。
-     */
     public List<IntervalBucketDto> intervalDistribution() {
         long below1h = wordStateMapper.countByIntervalRange(0, 59);
         long oneTo24h = wordStateMapper.countByIntervalRange(60, 1439);
