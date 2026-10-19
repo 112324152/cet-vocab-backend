@@ -1,0 +1,35 @@
+package com.cetvocab.backend.mapper;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+
+import com.cetvocab.backend.model.DailyStatDto;
+
+@Mapper
+public interface ReviewLogMapper {
+
+    @Insert("INSERT INTO review_log (word_id, state) VALUES (#{wordId}, #{state})")
+    void insert(@Param("wordId") Long wordId, @Param("state") String state);
+
+    @Select("SELECT COUNT(*) FROM review_log")
+    long countTotal();
+
+    @Select("SELECT COUNT(*) FROM review_log WHERE state = 'known'")
+    long countKnown();
+
+    @Select("SELECT COUNT(DISTINCT DATE(reviewed_at)) FROM review_log")
+    long countStudyDays();
+
+    @Select("SELECT DATE_FORMAT(reviewed_at, '%Y-%m-%d') AS date, "
+            + "COUNT(*) AS total, "
+            + "SUM(CASE WHEN state = 'known' THEN 1 ELSE 0 END) AS known_count "
+            + "FROM review_log "
+            + "WHERE reviewed_at >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY) "
+            + "GROUP BY DATE(reviewed_at) "
+            + "ORDER BY date")
+    List<DailyStatDto> findDaily(@Param("days") int days);
+}

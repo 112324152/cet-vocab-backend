@@ -25,4 +25,13 @@ CREATE TABLE IF NOT EXISTS word_state (
     UNIQUE KEY uk_word_id (word_id),
     INDEX idx_next_review (next_review_at),
     CONSTRAINT fk_word_state_word FOREIGN KEY (word_id) REFERENCES word(id) ON DELETE CASCADE
+    CREATE TABLE IF NOT EXISTS review_log (
+                                              id          BIGINT PRIMARY KEY AUTO_INCREMENT,
+                                              word_id     BIGINT NOT NULL,
+                                              state       VARCHAR(16) NOT NULL,
+    reviewed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_reviewed_at (reviewed_at),
+    INDEX idx_word_id (word_id),
+    CONSTRAINT fk_review_log_word FOREIGN KEY (word_id) REFERENCES word(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

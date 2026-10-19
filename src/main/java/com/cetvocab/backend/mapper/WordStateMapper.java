@@ -44,4 +44,14 @@ public interface WordStateMapper {
             + "repetitions = VALUES(repetitions), lapses = VALUES(lapses), "
             + "next_review_at = VALUES(next_review_at), last_reviewed_at = VALUES(last_reviewed_at)")
     void upsert(WordStateRow row);
+    @Select("SELECT word_id, state, ease_factor, interval_minutes, repetitions, "
+            + "lapses, next_review_at, last_reviewed_at FROM word_state "
+            + "WHERE lapses > 0 "
+            + "ORDER BY lapses DESC, ease_factor ASC, interval_minutes ASC "
+            + "LIMIT #{limit}")
+    List<WordStateRow> findHardest(@Param("limit") int limit);
+
+    @Select("SELECT COUNT(*) FROM word_state "
+            + "WHERE interval_minutes >= #{min} AND interval_minutes < #{max}")
+    long countByIntervalRange(@Param("min") long min, @Param("max") long max);
 }

@@ -33,6 +33,7 @@ services:
       LLM_MODEL: deepseek-chat
       IMPORT_ENABLED: "true"
       JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m"
+      TZ: Asia/Shanghai
     depends_on:
       mysql:
         condition: service_healthy

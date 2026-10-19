@@ -41,6 +41,7 @@ services:
       LLM_API_KEY: ollama
       LLM_MODEL: qwen2.5:3b
       IMPORT_ENABLED: "true"
+      TZ: Asia/Shanghai
     depends_on:
       mysql:
         condition: service_healthy
