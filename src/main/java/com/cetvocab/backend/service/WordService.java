@@ -151,6 +151,9 @@ public class WordService {
         }
         return toWord(row);
     }
+    public String getWordText(Long id) {
+        return getWord(id).getText();
+    }
 
     private Word toWord(WordRow row) {
         try {
