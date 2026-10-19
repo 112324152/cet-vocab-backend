@@ -29,7 +29,7 @@ public interface ReviewLogMapper {
             + "SUM(CASE WHEN state = 'known' THEN 1 ELSE 0 END) AS known_count "
             + "FROM review_log "
             + "WHERE reviewed_at >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY) "
-            + "GROUP BY DATE(reviewed_at) "
-            + "ORDER BY date")
+            + "GROUP BY DATE_FORMAT(reviewed_at, '%Y-%m-%d') "
+            + "ORDER BY DATE_FORMAT(reviewed_at, '%Y-%m-%d')")
     List<DailyStatDto> findDaily(@Param("days") int days);
 }
