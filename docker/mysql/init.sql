@@ -33,5 +33,13 @@ CREATE TABLE IF NOT EXISTS word_state (
     INDEX idx_reviewed_at (reviewed_at),
     INDEX idx_word_id (word_id),
     CONSTRAINT fk_review_log_word FOREIGN KEY (word_id) REFERENCES word(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    CREATE TABLE IF NOT EXISTS word_family (
+                                               id              BIGINT PRIMARY KEY AUTO_INCREMENT,
+                                               lemma_id        BIGINT NOT NULL,
+                                               member_text     VARCHAR(64) NOT NULL,
+    relation_type   VARCHAR(8) NOT NULL,
+    member_phonetic VARCHAR(64),
+    member_meaning  TEXT,
+    INDEX idx_lemma (lemma_id),
+    CONSTRAINT fk_word_family_lemma FOREIGN KEY (lemma_id) REFERENCES word(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
