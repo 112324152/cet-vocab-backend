@@ -43,3 +43,25 @@ CREATE TABLE IF NOT EXISTS word_state (
     INDEX idx_lemma (lemma_id),
     CONSTRAINT fk_word_family_lemma FOREIGN KEY (lemma_id) REFERENCES word(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS dict_entry (
+  id          BIGINT PRIMARY KEY AUTO_INCREMENT,
+  word        VARCHAR(64) NOT NULL,
+  phonetic    VARCHAR(64),
+  translation TEXT,
+  definition  TEXT,
+  tag         VARCHAR(128),
+  exchange    VARCHAR(512),
+  UNIQUE KEY uk_word (word)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS collected_word (
+  id           BIGINT PRIMARY KEY AUTO_INCREMENT,
+  word         VARCHAR(64) NOT NULL,
+  phonetic     VARCHAR(64),
+  translation  TEXT,
+  context      TEXT,
+  collected_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_word (word),
+  INDEX idx_collected_at (collected_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

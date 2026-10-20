@@ -1,16 +1,17 @@
 package com.cetvocab.backend.service;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
+import com.cetvocab.backend.client.DictLookupClient;
 import com.cetvocab.backend.mapper.CollectedWordMapper;
 import com.cetvocab.backend.mapper.DictEntryMapper;
-import com.cetvocab.backend.model.CollectedWordRow;
 import com.cetvocab.backend.model.CollectRequest;
+import com.cetvocab.backend.model.CollectedWordRow;
 import com.cetvocab.backend.model.DictEntryRow;
 import com.cetvocab.backend.model.LookupDto;
 
@@ -19,11 +20,14 @@ public class DictService {
 
     private final DictEntryMapper dictEntryMapper;
     private final CollectedWordMapper collectedWordMapper;
+    private final DictLookupClient dictLookupClient;
 
     public DictService(DictEntryMapper dictEntryMapper,
-                       CollectedWordMapper collectedWordMapper) {
+                       CollectedWordMapper collectedWordMapper,
+                       DictLookupClient dictLookupClient) {
         this.dictEntryMapper = dictEntryMapper;
         this.collectedWordMapper = collectedWordMapper;
+        this.dictLookupClient = dictLookupClient;
     }
 
     public LookupDto lookup(String rawWord) {
@@ -36,23 +40,18 @@ public class DictService {
 
     public List<LookupDto> batchLookup(List<String> rawWords) {
         if (rawWords == null || rawWords.isEmpty()) return List.of();
-
-        // 去重、小写、过滤
         Set<String> cleaned = new LinkedHashSet<>();
         for (String w : rawWords) {
             if (w == null) continue;
             String t = w.toLowerCase().trim();
             if (t.isEmpty() || t.length() > 64) continue;
             cleaned.add(t);
-            if (cleaned.size() >= 500) break; // 上限防止恶意大请求
+            if (cleaned.size() >= 500) break;
         }
         if (cleaned.isEmpty()) return List.of();
-
         List<DictEntryRow> rows = dictEntryMapper.findByWords(new ArrayList<>(cleaned));
         List<LookupDto> result = new ArrayList<>();
-        for (DictEntryRow row : rows) {
-            result.add(toDto(row));
-        }
+        for (DictEntryRow row : rows) result.add(toDto(row));
         return result;
     }
 
@@ -66,12 +65,23 @@ public class DictService {
         }
 
         DictEntryRow dict = dictEntryMapper.findByWord(word);
+        String phonetic = (dict == null) ? "" : emptySafe(dict.getPhonetic());
+        String translation = (dict == null) ? "" : emptySafe(dict.getTranslation());
+
+        if (translation.isEmpty()) {
+            translation = dictLookupClient.lookupTranslation(word);
+        }
+
         CollectedWordRow row = new CollectedWordRow();
         row.setWord(word);
-        row.setPhonetic(dict == null ? "" : dict.getPhonetic());
-        row.setTranslation(dict == null ? "" : emptySafe(dict.getTranslation()));
+        row.setPhonetic(phonetic);
+        row.setTranslation(translation);
         row.setContext(request.context() == null ? "" : request.context().trim());
         collectedWordMapper.upsert(row);
+    }
+
+    public void deleteCollected(Long id) {
+        collectedWordMapper.deleteById(id);
     }
 
     public List<CollectedWordRow> listCollected() {
@@ -83,7 +93,6 @@ public class DictService {
     }
 
     private LookupDto toDto(DictEntryRow row) {
-        // ECDICT 的 translation 用字面量 \n 分隔多段，取第一段
         String raw = emptySafe(row.getTranslation());
         String first = raw.split("\\\\n")[0];
         return new LookupDto(

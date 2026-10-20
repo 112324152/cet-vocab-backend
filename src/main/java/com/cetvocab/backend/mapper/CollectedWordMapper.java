@@ -2,6 +2,7 @@ package com.cetvocab.backend.mapper;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -21,6 +22,11 @@ public interface CollectedWordMapper {
 
     @Insert("INSERT INTO collected_word (word, phonetic, translation, context) "
             + "VALUES (#{word}, #{phonetic}, #{translation}, #{context}) "
-            + "ON DUPLICATE KEY UPDATE context = VALUES(context), collected_at = CURRENT_TIMESTAMP")
+            + "ON DUPLICATE KEY UPDATE phonetic = VALUES(phonetic), "
+            + "translation = VALUES(translation), context = VALUES(context), "
+            + "collected_at = CURRENT_TIMESTAMP")
     void upsert(CollectedWordRow row);
+
+    @Delete("DELETE FROM collected_word WHERE id = #{id}")
+    void deleteById(@Param("id") Long id);
 }
