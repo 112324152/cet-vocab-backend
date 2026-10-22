@@ -1,6 +1,5 @@
 package com.cetvocab.backend.service;
 
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -8,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.cetvocab.backend.mapper.UserMapper;
 import com.cetvocab.backend.model.UserRow;
+import com.cetvocab.backend.security.AppUserPrincipal;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
@@ -24,10 +24,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         if (row == null) {
             throw new UsernameNotFoundException("user not found: " + username);
         }
-        return User.builder()
-                .username(row.getUsername())
-                .password(row.getPasswordHash())
-                .roles("USER")
-                .build();
+        return new AppUserPrincipal(
+                row.getId(),
+                row.getUsername(),
+                row.getPasswordHash(),
+                row.getDisplayName(),
+                row.isGuest()
+        );
     }
 }
