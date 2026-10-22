@@ -15,6 +15,7 @@ import com.cetvocab.backend.model.BatchLookupRequest;
 import com.cetvocab.backend.model.CollectRequest;
 import com.cetvocab.backend.model.CollectedWordRow;
 import com.cetvocab.backend.model.LookupDto;
+import com.cetvocab.backend.security.CurrentUser;
 import com.cetvocab.backend.service.DictService;
 
 @RestController
@@ -39,16 +40,16 @@ public class DictController {
 
     @PostMapping("/collect")
     public void collect(@RequestBody CollectRequest request) {
-        dictService.collect(request);
+        dictService.collect(CurrentUser.id(), request);
     }
 
     @DeleteMapping("/collected/{id}")
     public void deleteCollected(@PathVariable Long id) {
-        dictService.deleteCollected(id);
+        dictService.deleteCollected(CurrentUser.id(), id);
     }
 
     @GetMapping("/collected")
     public List<CollectedWordRow> collected() {
-        return dictService.listCollected();
+        return dictService.listCollected(CurrentUser.id());
     }
 }

@@ -46,49 +46,47 @@ public class WordService {
         this.reviewLogMapper = reviewLogMapper;
     }
 
-    /** 返回整份词表，仅用于调试和后续的词库管理页面。正式背诵走 next()。 */
     public List<Word> getWords() {
         return wordMapper.findAll().stream()
                 .map(this::toWord)
                 .toList();
     }
 
-    /** 取单词原文，供 TTS 使用。 */
     public String getWordText(Long id) {
         return getWord(id).getText();
     }
 
-    public Word next(Long excludeId) {
+    public Word next(Long userId, Long excludeId) {
         Long excluded = (excludeId == null) ? -1L : excludeId;
 
-        Long dueId = wordStateMapper.findMostOverdue(excluded);
+        Long dueId = wordStateMapper.findMostOverdue(userId, excluded);
         if (dueId != null) {
             return getWord(dueId);
         }
 
-        Long newId = wordMapper.findRandomNew(excluded);
+        Long newId = wordMapper.findRandomNew(userId, excluded);
         if (newId != null) {
             return getWord(newId);
         }
 
-        Long soonestId = wordStateMapper.findSoonest(excluded);
+        Long soonestId = wordStateMapper.findSoonest(userId, excluded);
         if (soonestId == null) {
             throw new IllegalStateException("词库为空");
         }
         return getWord(soonestId);
     }
 
-    public void markState(Long wordId, String state) {
+    public void markState(Long userId, Long wordId, String state) {
         if (!"known".equals(state) && !"unknown".equals(state)) {
             throw new IllegalArgumentException("state 只能是 known 或 unknown");
         }
-        WordStateRow existing = wordStateMapper.findByWordId(wordId);
-        WordStateRow updated = applyAlgorithm(existing, wordId, state);
+        WordStateRow existing = wordStateMapper.findByWordId(userId, wordId);
+        WordStateRow updated = applyAlgorithm(userId, existing, wordId, state);
         wordStateMapper.upsert(updated);
-        reviewLogMapper.insert(wordId, state);
+        reviewLogMapper.insert(userId, wordId, state);
     }
 
-    private WordStateRow applyAlgorithm(WordStateRow existing, Long wordId, String state) {
+    private WordStateRow applyAlgorithm(Long userId, WordStateRow existing, Long wordId, String state) {
         double ease = (existing == null) ? DEFAULT_EASE : existing.getEaseFactor();
         long interval = (existing == null) ? 0 : existing.getIntervalMinutes();
         int reps = (existing == null) ? 0 : existing.getRepetitions();
@@ -114,6 +112,7 @@ public class WordService {
 
         LocalDateTime now = LocalDateTime.now();
         WordStateRow row = new WordStateRow();
+        row.setUserId(userId);
         row.setWordId(wordId);
         row.setState(state);
         row.setEaseFactor(ease);
@@ -125,35 +124,35 @@ public class WordService {
         return row;
     }
 
-    public StatsDto stats() {
+    public StatsDto stats(Long userId) {
         long total = wordMapper.countTotal();
-        long due = wordStateMapper.countDue();
-        long known = wordStateMapper.countKnown();
-        long unknown = wordStateMapper.countUnknown();
+        long due = wordStateMapper.countDue(userId);
+        long known = wordStateMapper.countKnown(userId);
+        long unknown = wordStateMapper.countUnknown(userId);
         long learned = known + unknown;
         long newCount = Math.max(0, total - learned);
         return new StatsDto(total, newCount, due, known, unknown);
     }
 
-    public AnalyticsOverviewDto analyticsOverview() {
+    public AnalyticsOverviewDto analyticsOverview(Long userId) {
         long totalWords = wordMapper.countTotal();
-        long learned = wordStateMapper.countKnown() + wordStateMapper.countUnknown();
+        long learned = wordStateMapper.countKnown(userId) + wordStateMapper.countUnknown(userId);
         long newWords = Math.max(0, totalWords - learned);
-        long totalReviews = reviewLogMapper.countTotal();
-        long knownReviews = reviewLogMapper.countKnown();
-        long studyDays = reviewLogMapper.countStudyDays();
+        long totalReviews = reviewLogMapper.countTotal(userId);
+        long knownReviews = reviewLogMapper.countKnown(userId);
+        long studyDays = reviewLogMapper.countStudyDays(userId);
         long accuracy = totalReviews == 0 ? 0 : Math.round(knownReviews * 100.0 / totalReviews);
-        long dueNow = wordStateMapper.countDue();
+        long dueNow = wordStateMapper.countDue(userId);
         return new AnalyticsOverviewDto(
                 totalWords, learned, newWords, totalReviews, studyDays, accuracy, dueNow);
     }
 
-    public List<DailyStatDto> dailyStats(int days) {
-        return reviewLogMapper.findDaily(days);
+    public List<DailyStatDto> dailyStats(Long userId, int days) {
+        return reviewLogMapper.findDaily(userId, days);
     }
 
-    public List<HardestWordDto> hardestWords(int limit) {
-        List<WordStateRow> states = wordStateMapper.findHardest(limit);
+    public List<HardestWordDto> hardestWords(Long userId, int limit) {
+        List<WordStateRow> states = wordStateMapper.findHardest(userId, limit);
         List<HardestWordDto> result = new ArrayList<>();
         for (WordStateRow s : states) {
             WordRow row = wordMapper.findById(s.getWordId());
@@ -179,12 +178,12 @@ public class WordService {
         return result;
     }
 
-    public List<IntervalBucketDto> intervalDistribution() {
-        long below1h = wordStateMapper.countByIntervalRange(0, 59);
-        long oneTo24h = wordStateMapper.countByIntervalRange(60, 1439);
-        long oneTo7d = wordStateMapper.countByIntervalRange(1440, 10079);
-        long sevenTo30d = wordStateMapper.countByIntervalRange(10080, 43199);
-        long over30d = wordStateMapper.countByIntervalRange(43200, Long.MAX_VALUE);
+    public List<IntervalBucketDto> intervalDistribution(Long userId) {
+        long below1h = wordStateMapper.countByIntervalRange(userId, 0, 59);
+        long oneTo24h = wordStateMapper.countByIntervalRange(userId, 60, 1439);
+        long oneTo7d = wordStateMapper.countByIntervalRange(userId, 1440, 10079);
+        long sevenTo30d = wordStateMapper.countByIntervalRange(userId, 10080, 43199);
+        long over30d = wordStateMapper.countByIntervalRange(userId, 43200, Long.MAX_VALUE);
         return List.of(
                 new IntervalBucketDto("10 分钟", below1h),
                 new IntervalBucketDto("1 小时内", oneTo24h),

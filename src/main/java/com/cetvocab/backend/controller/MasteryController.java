@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.cetvocab.backend.security.CurrentUser;
 import com.cetvocab.backend.service.MasteryService;
 
 @RestController
@@ -19,6 +20,6 @@ public class MasteryController {
 
     @PostMapping("/mastered/{wordId}")
     public void markMastered(@PathVariable Long wordId) {
-        masteryService.markMastered(wordId);
+        masteryService.markMastered(CurrentUser.id(), wordId);
     }
 }

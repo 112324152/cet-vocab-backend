@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 public class WordStateRow {
 
+    private Long userId;
     private Long wordId;
     private String state;
     private double easeFactor;
@@ -12,6 +13,9 @@ public class WordStateRow {
     private int lapses;
     private LocalDateTime nextReviewAt;
     private LocalDateTime lastReviewedAt;
+
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
 
     public Long getWordId() { return wordId; }
     public void setWordId(Long wordId) { this.wordId = wordId; }

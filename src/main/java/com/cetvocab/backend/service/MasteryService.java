@@ -13,7 +13,7 @@ public class MasteryService {
         this.masteryMapper = masteryMapper;
     }
 
-    public void markMastered(Long wordId) {
-        masteryMapper.markMastered(wordId);
+    public void markMastered(Long userId, Long wordId) {
+        masteryMapper.markMastered(userId, wordId);
     }
 }

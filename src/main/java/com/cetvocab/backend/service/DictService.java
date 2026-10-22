@@ -55,7 +55,7 @@ public class DictService {
         return result;
     }
 
-    public void collect(CollectRequest request) {
+    public void collect(Long userId, CollectRequest request) {
         if (request == null || request.word() == null) {
             throw new IllegalArgumentException("word 必须非空");
         }
@@ -73,6 +73,7 @@ public class DictService {
         }
 
         CollectedWordRow row = new CollectedWordRow();
+        row.setUserId(userId);
         row.setWord(word);
         row.setPhonetic(phonetic);
         row.setTranslation(translation);
@@ -80,12 +81,12 @@ public class DictService {
         collectedWordMapper.upsert(row);
     }
 
-    public void deleteCollected(Long id) {
-        collectedWordMapper.deleteById(id);
+    public void deleteCollected(Long userId, Long id) {
+        collectedWordMapper.deleteById(userId, id);
     }
 
-    public List<CollectedWordRow> listCollected() {
-        return collectedWordMapper.findAll();
+    public List<CollectedWordRow> listCollected(Long userId) {
+        return collectedWordMapper.findAll(userId);
     }
 
     private String emptySafe(String s) {

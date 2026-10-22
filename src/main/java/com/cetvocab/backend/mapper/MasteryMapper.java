@@ -11,6 +11,6 @@ public interface MasteryMapper {
             + "repetitions = 10, ease_factor = 2.8, "
             + "next_review_at = DATE_ADD(NOW(), INTERVAL 365 DAY), "
             + "last_reviewed_at = NOW() "
-            + "WHERE word_id = #{wordId}")
-    void markMastered(@Param("wordId") Long wordId);
+            + "WHERE user_id = #{userId} AND word_id = #{wordId}")
+    void markMastered(@Param("userId") Long userId, @Param("wordId") Long wordId);
 }

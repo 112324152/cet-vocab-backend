@@ -16,6 +16,7 @@ import com.cetvocab.backend.client.TtsClient;
 import com.cetvocab.backend.model.MarkRequest;
 import com.cetvocab.backend.model.StatsDto;
 import com.cetvocab.backend.model.Word;
+import com.cetvocab.backend.security.CurrentUser;
 import com.cetvocab.backend.service.WordService;
 
 @RestController
@@ -37,17 +38,17 @@ public class WordController {
 
     @GetMapping("/words/next")
     public Word next(@RequestParam(required = false) Long excludeId) {
-        return wordService.next(excludeId);
+        return wordService.next(CurrentUser.id(), excludeId);
     }
 
     @PostMapping("/words/{id}/state")
     public void markState(@PathVariable Long id, @RequestBody MarkRequest request) {
-        wordService.markState(id, request.state());
+        wordService.markState(CurrentUser.id(), id, request.state());
     }
 
     @GetMapping("/stats")
     public StatsDto stats() {
-        return wordService.stats();
+        return wordService.stats(CurrentUser.id());
     }
 
     @GetMapping(value = "/words/{id}/audio", produces = "audio/mpeg")
