@@ -20,6 +20,9 @@ import com.cetvocab.backend.model.WordStateRow;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.cetvocab.backend.model.DayCountDto;
+import com.cetvocab.backend.model.DayWordDto;
+import com.cetvocab.backend.model.ReviewLogRow;
 @Service
 public class WordService {
 
@@ -214,6 +217,42 @@ public class WordService {
             throw new IllegalStateException("单词不存在: " + id);
         }
         return toWord(row);
+    }
+    public long todayCount(Long userId) {
+        return reviewLogMapper.countToday(userId);
+    }
+
+    public List<DayCountDto> monthCounts(Long userId, int year, int month) {
+        java.time.LocalDate first = java.time.LocalDate.of(year, month, 1);
+        java.time.LocalDate next = first.plusMonths(1);
+        return reviewLogMapper.countByDateRange(
+                userId, first.toString(), next.toString());
+    }
+
+    public List<DayWordDto> dayWords(Long userId, String date) {
+        List<ReviewLogRow> logs = reviewLogMapper.findByDate(userId, date);
+
+        // 同一天同一个词可能复习多次，只保留最后一次
+        java.util.LinkedHashMap<Long, ReviewLogRow> latest = new java.util.LinkedHashMap<>();
+        for (ReviewLogRow l : logs) {
+            latest.put(l.getWordId(), l);
+        }
+
+        List<DayWordDto> result = new ArrayList<>();
+        for (ReviewLogRow l : latest.values()) {
+            WordRow row = wordMapper.findById(l.getWordId());
+            if (row == null) continue;
+            String first = "";
+            try {
+                List<String> ms = objectMapper.readValue(
+                        row.getMeanings(), new TypeReference<List<String>>() {});
+                if (!ms.isEmpty()) first = ms.get(0);
+            } catch (Exception ignored) {}
+            result.add(new DayWordDto(
+                    row.getId(), row.getText(), row.getPhonetic(),
+                    first, l.getState(), l.getReviewedAt()));
+        }
+        return result;
     }
 
     private Word toWord(WordRow row) {

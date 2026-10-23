@@ -1,4 +1,6 @@
 package com.cetvocab.backend.mapper;
+import com.cetvocab.backend.model.DayCountDto;
+import com.cetvocab.backend.model.ReviewLogRow;
 
 import java.util.List;
 
@@ -11,6 +13,25 @@ import com.cetvocab.backend.model.DailyStatDto;
 
 @Mapper
 public interface ReviewLogMapper {
+    @Select("SELECT COUNT(*) FROM review_log "
+            + "WHERE user_id = #{userId} AND DATE(reviewed_at) = CURDATE()")
+    long countToday(@Param("userId") Long userId);
+
+    @Select("SELECT DATE_FORMAT(reviewed_at, '%Y-%m-%d') AS date, COUNT(*) AS total "
+            + "FROM review_log "
+            + "WHERE user_id = #{userId} "
+            + "AND reviewed_at >= #{start} AND reviewed_at < #{end} "
+            + "GROUP BY DATE_FORMAT(reviewed_at, '%Y-%m-%d') "
+            + "ORDER BY date")
+    List<DayCountDto> countByDateRange(@Param("userId") Long userId,
+                                       @Param("start") String start,
+                                       @Param("end") String end);
+
+    @Select("SELECT word_id, state, reviewed_at FROM review_log "
+            + "WHERE user_id = #{userId} AND DATE(reviewed_at) = #{date} "
+            + "ORDER BY reviewed_at ASC")
+    List<ReviewLogRow> findByDate(@Param("userId") Long userId,
+                                  @Param("date") String date);
 
     @Insert("INSERT INTO review_log (user_id, word_id, state) "
             + "VALUES (#{userId}, #{wordId}, #{state})")
