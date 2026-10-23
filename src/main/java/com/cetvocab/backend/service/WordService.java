@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.cetvocab.backend.mapper.ReviewLogMapper;
 import com.cetvocab.backend.mapper.WordMapper;
@@ -79,6 +80,7 @@ public class WordService {
         return getWord(soonestId);
     }
 
+    @Transactional
     public void markState(Long userId, Long wordId, String state) {
         if (!"known".equals(state) && !"unknown".equals(state)) {
             throw new IllegalArgumentException("state 只能是 known 或 unknown");
